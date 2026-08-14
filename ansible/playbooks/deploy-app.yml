@@ -1,0 +1,6 @@
+---
+- name: Deploy da stack de aplicação
+  hosts: aws
+  become: true
+  roles:
+    - deploy-app

@@ -1,0 +1,4 @@
+---
+- name: Reiniciar sessão SSH info
+  debug:
+    msg: "Usuário adicionado ao grupo docker. É necessário reconectar via SSH para o grupo ter efeito."

@@ -1,0 +1,6 @@
+---
+- name: Aplicar hardening básico
+  hosts: all
+  become: true
+  roles:
+    - hardening

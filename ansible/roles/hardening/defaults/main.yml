@@ -1,0 +1,4 @@
+---
+ssh_port: 22
+disable_root_login: true
+allowed_users: "ubuntu"

@@ -1,0 +1,66 @@
+---
+- name: Verificar se swap já existe
+  command: swapon --show
+  register: swap_check
+  changed_when: false
+
+- name: Criar arquivo de swap (1GB)
+  command: fallocate -l 1G /swapfile
+  when: swap_check.stdout == ""
+
+- name: Ajustar permissão do swapfile
+  file:
+    path: /swapfile
+    mode: '0600'
+  when: swap_check.stdout == ""
+
+- name: Formatar swapfile
+  command: mkswap /swapfile
+  when: swap_check.stdout == ""
+
+- name: Ativar swap
+  command: swapon /swapfile
+  when: swap_check.stdout == ""
+
+- name: Persistir swap no fstab
+  lineinfile:
+    path: /etc/fstab
+    line: '/swapfile none swap sw 0 0'
+    state: present
+
+- name: Desabilitar login root via SSH
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PermitRootLogin'
+    line: 'PermitRootLogin no'
+  notify: Reiniciar SSH
+
+- name: Desabilitar autenticação por senha (só chave SSH)
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PasswordAuthentication'
+    line: 'PasswordAuthentication no'
+  notify: Reiniciar SSH
+
+- name: Instalar fail2ban (proteção contra brute-force SSH)
+  apt:
+    name: fail2ban
+    state: present
+    update_cache: yes
+
+- name: Garantir que fail2ban está ativo
+  service:
+    name: fail2ban
+    state: started
+    enabled: true
+
+- name: Instalar unattended-upgrades (atualizações de segurança automáticas)
+  apt:
+    name: unattended-upgrades
+    state: present
+
+- name: Habilitar unattended-upgrades
+  service:
+    name: unattended-upgrades
+    state: started
+    enabled: true

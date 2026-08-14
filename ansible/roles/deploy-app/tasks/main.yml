@@ -1,0 +1,28 @@
+---
+- name: Instalar rsync na instância
+  apt:
+    name: rsync
+    state: present
+
+- name: Criar diretório do projeto na instância
+  file:
+    path: /home/{{ ansible_user }}/cloudops-platform
+    state: directory
+    mode: '0755'
+
+- name: Copiar pasta app/
+  synchronize:
+    src: ../../../app/
+    dest: /home/{{ ansible_user }}/cloudops-platform/app/
+    delete: yes
+
+- name: Copiar pasta docker/
+  synchronize:
+    src: ../../../docker/
+    dest: /home/{{ ansible_user }}/cloudops-platform/docker/
+    delete: yes
+
+- name: Subir stack via Docker Compose
+  community.docker.docker_compose_v2:
+    project_src: /home/{{ ansible_user }}/cloudops-platform/docker
+    state: present

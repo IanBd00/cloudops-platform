@@ -1,0 +1,13 @@
+---
+- name: Atualizar os pacotes do sistema
+  hosts: aws
+  become: true
+
+  tasks:
+    - name: atualizar cache do apt
+      apt:
+        update_cache: yes
+
+    - name: Atualizar todos os pacotes
+      apt:
+        upgrade: dist

@@ -1,0 +1,6 @@
+---
+- name: Provisionar Docker
+  hosts: all
+  become: true
+  roles:
+    - docker

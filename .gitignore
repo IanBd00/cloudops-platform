@@ -17,6 +17,7 @@ provider.tf
 # Ansible
 *.retry
 .vault_pass
+ansible/inventory/
 
 # Credenciais
 .oci/
