@@ -1,0 +1,35 @@
+name: Security Scan
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  checkov:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkov (scan Terraform)
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: terraform/
+          framework: terraform
+          soft_fail: true
+
+  trivy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build app image
+        run: docker build -t cloudops-app:scan ./app
+
+      - name: Trivy (scan imagem)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: cloudops-app:scan
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: 0

@@ -1,0 +1,47 @@
+name: Terraform Plan
+
+on:
+  pull_request:
+    paths:
+      - 'terraform/**'
+
+jobs:
+  plan-aws:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform/environments/aws
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - run: terraform init
+      - run: terraform plan
+
+  plan-oci:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform/environments/oci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - name: Setup OCI config
+        run: |
+          mkdir -p ~/.oci
+          echo "${{ secrets.OCI_PRIVATE_KEY }}" > ~/.oci/oci_api_key.pem
+          chmod 600 ~/.oci/oci_api_key.pem
+          cat <<EOF > terraform.tfvars
+          tenancy_ocid     = "${{ secrets.OCI_TENANCY_OCID }}"
+          user_ocid        = "${{ secrets.OCI_USER_OCID }}"
+          fingerprint      = "${{ secrets.OCI_FINGERPRINT }}"
+          private_key_path = "~/.oci/oci_api_key.pem"
+          compartment_ocid = "${{ secrets.OCI_COMPARTMENT_OCID }}"
+          region            = "sa-saopaulo-1"
+          EOF
+      - run: terraform init
+      - run: terraform plan

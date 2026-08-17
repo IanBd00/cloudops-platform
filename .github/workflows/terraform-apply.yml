@@ -1,0 +1,57 @@
+name: Terraform Apply
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Ambiente (aws ou oci)'
+        required: true
+        default: 'aws'
+        type: choice
+        options:
+          - aws
+          - oci
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    environment: production
+    defaults:
+      run:
+        working-directory: terraform/environments/${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Configure AWS Credentials
+        if: github.event.inputs.environment == 'aws'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Setup OCI config
+        if: github.event.inputs.environment == 'oci'
+        run: |
+          mkdir -p ~/.oci
+          echo "${{ secrets.OCI_PRIVATE_KEY }}" > ~/.oci/oci_api_key.pem
+          chmod 600 ~/.oci/oci_api_key.pem
+          cat <<EOF > terraform.tfvars
+          tenancy_ocid     = "${{ secrets.OCI_TENANCY_OCID }}"
+          user_ocid        = "${{ secrets.OCI_USER_OCID }}"
+          fingerprint      = "${{ secrets.OCI_FINGERPRINT }}"
+          private_key_path = "~/.oci/oci_api_key.pem"
+          compartment_ocid = "${{ secrets.OCI_COMPARTMENT_OCID }}"
+          region            = "sa-saopaulo-1"
+          EOF
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
