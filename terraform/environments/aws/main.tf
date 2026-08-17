@@ -21,4 +21,4 @@ module "ec2" {
     subnet_id = module.vpc.public_subnet_id
     project_name = var.project_name
     sg_id = module.security.sg_id
-}# teste ci/cd
+}# teste ci/cd v2
